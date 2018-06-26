@@ -42,15 +42,15 @@ class CategoryViewController: UITableViewController {
     override func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
 //        performSegue(withIdentifier: "goToItems", sender: self)
         
-        let vc = UIStoryboard(name: "Main", bundle: nil).instantiateViewController(withIdentifier: "TodoListViewController")
-        
-//        if let indexPath = tableView.indexPathForSelectedRow {
-//            vc.selectedCategory = categoryArray?[indexPath.row]
-//        }
-        
+        let vc = UIStoryboard(name: "Main", bundle: nil).instantiateViewController(withIdentifier: "TodoListViewController") as! TodoListViewController
+
+        if let indexPath = tableView.indexPathForSelectedRow {
+            vc.selectedCategory = categoryArray?[indexPath.row]
+        }
+
         self.navigationController?.pushViewController(vc, animated: true)
     }
-    
+
 //    override func prepare(for segue: UIStoryboardSegue, sender: Any?) {
 //
 //        let destinationVC = segue.destination as! TodoListViewController
