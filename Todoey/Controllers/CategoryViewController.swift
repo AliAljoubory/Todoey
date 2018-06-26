@@ -7,13 +7,13 @@
 //
 
 import UIKit
-import CoreData
+import RealmSwift
 
 class CategoryViewController: UITableViewController {
     
-    var categoryArray = [Category]()
+    let realm = try! Realm()
     
-    let context = (UIApplication.shared.delegate as! AppDelegate).persistentContainer.viewContext
+    var categoryArray : Results<Category>?
 
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -25,16 +25,14 @@ class CategoryViewController: UITableViewController {
     //MARK: - TableView Datasource Methods
     
     override func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        return categoryArray.count
+        return categoryArray?.count ?? 1
     }
     
     override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         
         let cell = tableView.dequeueReusableCell(withIdentifier: "CategoryCell", for: indexPath)
         
-        let category = categoryArray[indexPath.row]
-        
-        cell.textLabel?.text = category.name
+        cell.textLabel?.text = categoryArray?[indexPath.row].name ?? "No Todoey categories added"
         
         return cell
     }
@@ -42,25 +40,35 @@ class CategoryViewController: UITableViewController {
     //MARK: - TableView Delegate Methods
     
     override func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
-        performSegue(withIdentifier: "goToItems", sender: self)
+//        performSegue(withIdentifier: "goToItems", sender: self)
+        
+        let vc = UIStoryboard(name: "Main", bundle: nil).instantiateViewController(withIdentifier: "TodoListViewController")
+        
+//        if let indexPath = tableView.indexPathForSelectedRow {
+//            vc.selectedCategory = categoryArray?[indexPath.row]
+//        }
+        
+        self.navigationController?.pushViewController(vc, animated: true)
     }
     
-    override func prepare(for segue: UIStoryboardSegue, sender: Any?) {
-        
-        let destinationVC = segue.destination as! TodoListViewController
-        
-        if let indexPath = tableView.indexPathForSelectedRow {
-            destinationVC.selectedCategory = categoryArray[indexPath.row]
-        }
-    }
+//    override func prepare(for segue: UIStoryboardSegue, sender: Any?) {
+//
+//        let destinationVC = segue.destination as! TodoListViewController
+//
+//        if let indexPath = tableView.indexPathForSelectedRow {
+//            destinationVC.selectedCategory = categoryArray?[indexPath.row]
+//        }
+//    }
     
     
     //MARK: - Data Manipulation Methods
     
-    func saveCategories() {
+    func save(category : Category) {
         
         do {
-            try context.save()
+            try realm.write {
+                realm.add(category)
+            }
         } catch {
             print("Error saving category, \(error)")
         }
@@ -70,13 +78,7 @@ class CategoryViewController: UITableViewController {
     
     func loadCategories() {
         
-        let request : NSFetchRequest<Category> = Category.fetchRequest()
-        
-        do {
-            categoryArray = try context.fetch(request)
-        } catch {
-            print("Error loading categories, \(error)")
-        }
+        categoryArray = realm.objects(Category.self)
         
         tableView.reloadData()
         
@@ -91,20 +93,19 @@ class CategoryViewController: UITableViewController {
         
         let action = UIAlertAction(title: "Add category", style: .default) { (action) in
             
-            let newCategory = Category(context: self.context)
+            let newCategory = Category()
             newCategory.name = textfield.text!
-            self.categoryArray.append(newCategory)
             
-            self.saveCategories()
+            self.save(category : newCategory)
             
         }
+        
+        alert.addAction(action)
         
         alert.addTextField { (alertTextField) in
             alertTextField.placeholder = "Create new Todoey category"
             textfield = alertTextField
         }
-        
-        alert.addAction(action)
         
         present(alert, animated: true, completion: nil)
     
